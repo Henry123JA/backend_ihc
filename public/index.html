@@ -193,7 +193,7 @@
       const username = document.getElementById("tg_username").value;
       const first_name = document.getElementById("tg_nombre").value;
 
-      fetch("https://coral-app-ur5lt.ondigitalocean.app:8080/auth/login_telegram_cliente", {
+      fetch("https://coral-app-ur5lt.ondigitalocean.app/auth/login_telegram_cliente", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -218,7 +218,7 @@
     // 1) VER MENÚ (DISEÑO EN 2 COLUMNAS)
     // =====================================================
     function verMenu() {
-      fetch("https://coral-app-ur5lt.ondigitalocean.app:8080/productos")
+      fetch("https://coral-app-ur5lt.ondigitalocean.app/productos")
         .then(r => r.json())
         .then(productos => {
           const div = document.getElementById("menu");
@@ -308,7 +308,7 @@
         cantidad
       }));
 
-      fetch("https://coral-app-ur5lt.ondigitalocean.app:8080/pedidos/calcular_costos", {
+      fetch("https://coral-app-ur5lt.ondigitalocean.app/pedidos/calcular_costos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items, ubicacion: { lat, lng } })
@@ -353,7 +353,7 @@
         direccion: c.direccion
       };
 
-      fetch("https://coral-app-ur5lt.ondigitalocean.app:8080/pedidos/crear_pedido", {
+      fetch("https://coral-app-ur5lt.ondigitalocean.app/pedidos/crear_pedido", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -372,7 +372,7 @@
     // 5) MOSTRAR QR
     // =====================================================
     function mostrarQR(id) {
-      fetch(`https://coral-app-ur5lt.ondigitalocean.app:8080/pedidos/${id}/qr`)
+      fetch(`https://coral-app-ur5lt.ondigitalocean.app/pedidos/${id}/qr`)
         .then(r => r.json())
         .then(qr => {
           document.getElementById("qr_container").innerHTML = `
@@ -388,7 +388,7 @@
     // 6) PAGAR
     // =====================================================
     function pagar(id) {
-      fetch(`https://coral-app-ur5lt.ondigitalocean.app:8080/pedidos/${id}/confirmar_pago`, {
+      fetch(`https://coral-app-ur5lt.ondigitalocean.app/pedidos/${id}/confirmar_pago`, {
         method: "POST"
       })
         .then(r => r.json())
@@ -403,7 +403,7 @@
     // 7) MIS PEDIDOS
     // =====================================================
     function verMisPedidos() {
-      fetch(`https://coral-app-ur5lt.ondigitalocean.app:8080/usuarios/${usuario_id}/pedidos`)
+      fetch(`https://coral-app-ur5lt.ondigitalocean.app/usuarios/${usuario_id}/pedidos`)
         .then(r => r.json())
         .then(lista => {
           const div = document.getElementById("mis_pedidos");
