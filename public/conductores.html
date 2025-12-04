@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mapa Multi-Conductores (Tracking Manual)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        #map { height: 550px; width: 100%; border-radius: 10px; margin-top:15px; }
+        select,button { padding:10px; font-size:16px; margin-right:5px; }
+        h2 { margin-bottom:5px; }
+        #estado { font-size:17px; margin-top:5px; color:#0078ff; font-weight:bold; }
+    </style>
+</head>
+<body>
+
+<h2>🚗 Control Manual de Conductores</h2>
+<select id="conductorSelect"></select>
+<button onclick="modoAsignar()">📍 Mover conductor seleccionado</button>
+
+<p id="estado"></p>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+
+////===========================================
+//// CONFIGURACIÓN
+////===========================================
+const API = "http://localhost:8000";    // ← si usas móvil cambia a tu IP LAN
+let map = L.map('map').setView([-17.7833, -63.1821], 15);
+let markers = {};
+let conductorSeleccionado = null;
+let modoEditar = false;
+
+////===========================================
+// MAPA BASE
+////===========================================
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(map);
+
+
+////===========================================
+// ICONOS SEGÚN ESTADO
+////===========================================
+function iconoConductor(estado) {
+    let color = estado === 1 ? "green" : "red";
+    return L.icon({
+        iconUrl:`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
+        iconSize:[30, 45],
+        iconAnchor:[15, 45],
+        popupAnchor:[0, -40]
+    });
+}
+
+
+async function cargarConductores() {
+    let res = await fetch(`${API}/tracking/conductores`);
+    let data = await res.json();
+
+    let select = document.getElementById("conductorSelect");
+    select.innerHTML = "";
+
+    data.forEach(c => {
+        let op = document.createElement("option");
+        op.value = c.id;
+        op.innerText = `${c.id} - ${c.nombre} (${c.disponible==1? "Activo":"Inactivo"})`;
+        select.appendChild(op);
+
+        if(c.lat_actual && c.lng_actual){
+            // 🔥 Marcador con drag habilitado + nombre visible
+            let marker = L.marker([c.lat_actual, c.lng_actual], {
+                icon: iconoConductor(c.disponible),
+                draggable:true  // ← ahora puedes moverlo ARRÁSTRANDO
+            })
+            .addTo(map)
+            .bindTooltip(c.nombre, { permanent:true, direction:"top", offset:[0,-15] });
+
+            // 📌 Cuando lo arrastras → actualiza en BD
+            marker.on("moveend", async (e)=>{
+                let pos = e.target.getLatLng();
+
+                await fetch(`${API}/tracking/${c.id}`,{
+                    method:"POST",
+                    headers:{ "Content-Type":"application/json" },
+                    body:JSON.stringify({ latitud:pos.lat, longitud:pos.lng })
+                });
+
+                console.log(`✔ ${c.nombre} movido con DRAG → ${pos.lat}, ${pos.lng}`);
+            });
+
+            markers[c.id] = marker;
+        }
+    });
+}
+cargarConductores();
+
+
+////===========================================
+// 2) 🔥 Cargar restaurante desde backend
+////===========================================
+async function cargarRestaurante(){
+    let res = await fetch(`${API}/tracking/restaurante`);
+    let r = await res.json();
+
+    let iconRest = L.icon({
+        iconUrl: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
+        iconSize: [40, 40],
+        iconAnchor:[20, 40]
+    });
+
+    L.marker([r.lat, r.lng], {icon:iconRest})
+        .addTo(map)
+        .bindPopup(`<b>🍽 ${r.nombre}</b>`);
+}
+cargarRestaurante();
+
+
+////===========================================
+// 3) Seleccionar conductor para mover
+////===========================================
+function modoAsignar(){
+    conductorSeleccionado = document.getElementById("conductorSelect").value;
+    modoEditar = true;
+    document.getElementById("estado").innerHTML =
+        `👉 Click en el mapa para mover a conductor ID <b>${conductorSeleccionado}</b>`;
+}
+
+
+////===========================================
+// 4) Click en mapa → mueve marcador + guarda en BD
+ 
+// ================= CLICK EN MAPA PARA MOVER =================
+map.on("click", async function(e){
+    if(!conductorSeleccionado) return alert("Selecciona conductor primero");
+
+    let pos = e.latlng;
+
+    // Si ya existe marcador → moverlo
+    if(markers[conductorSeleccionado]){
+        markers[conductorSeleccionado].setLatLng(pos);
+    } else {
+        // Si no existe → crearlo
+        markers[conductorSeleccionado] = L.marker(pos,{
+            icon:iconoConductor(1),
+            draggable:true
+        })
+        .addTo(map)
+        .bindTooltip(`ID ${conductorSeleccionado}`, { permanent:true, direction:"top" });
+    }
+
+    // Guardar en BD
+    await fetch(`${API}/tracking/${conductorSeleccionado}`,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ latitud:pos.lat, longitud:pos.lng })
+    });
+
+    document.getElementById("estado").innerHTML =
+        `✔ Conductor ${conductorSeleccionado} movido con CLICK a → ${pos.lat} , ${pos.lng}`;
+});
+
+</script>
+</body>
+</html>

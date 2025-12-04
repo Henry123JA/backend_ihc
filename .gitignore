@@ -1,0 +1,58 @@
+# ====================================
+# 🐍 Python / FastAPI / Telegram Bot
+# ====================================
+
+# Entorno virtual
+venv/
+venv_backend/
+env/
+
+# Archivos compilados de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.pkl
+*.log
+
+# Dependencias instaladas (se reconstruyen con requirements.txt)
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Configuración local (entornos, IDEs)
+.vscode/
+.idea/
+*.iml
+
+# Archivos temporales del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de prueba o auto-generados
+*.zip
+*.db
+*.sqlite3
+*.sql
+*.bak
+
+# Archivos de ejemplo generados por el bot
+bot/__pycache__/
+backend/__pycache__/
+__pycache__/
+*.pyc
+# Archivos sensibles (tokens, claves, configuraciones locales)
+secrets*.json
+*.env
+*.ini
+*.properties
+
+# ====================================
+# 🧠 Otros
+# ====================================
+
+# Carpeta temporal de VS Code
+.history/
+.env

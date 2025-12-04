@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+ <!-- ===============================
+     no sirve solo simulacion...................
+     =============================== -->
+<head>
+  <meta charset="UTF-8">
+  <title>Simulación Bot Telegram – Cliente</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f7f7f7;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .producto,
+    .item-carrito {
+      padding: 10px;
+      margin: 10px 0;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+
+    button {
+      padding: 6px 14px;
+      margin: 4px;
+      border: none;
+      background: #0a82ff;
+      color: white;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    button:hover {
+      background: #005fcc;
+    }
+
+    .boton-mini {
+      padding: 4px 10px;
+    }
+
+    #carrito,
+    #costos,
+    #qr_container,
+    #mis_pedidos {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      border: 1px solid #ccc;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .producto {
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+
+    .producto button {
+      margin-top: 8px;
+      width: 100%;
+      background: #0a82ff;
+      color: white;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>🤖 Simulación Bot Telegram</h1>
+
+  <!-- LOGIN -->
+  <div id="login">
+    <h3>Simular usuario Telegram</h3>
+
+<input id="tg_id" type="text" placeholder="Telegram User ID" value="123456" />
+<input id="tg_username" type="text" placeholder="Username" value="alexuser" />
+<input id="tg_nombre" type="text" placeholder="Nombre" value="Alex" />
+
+
+    <button onclick="loginTelegram()">Ingresar</button>
+  </div>
+
+
+  <!-- ===============================
+     CONTENIDO PRINCIPAL (SIMULACIÓN BOT)
+     =============================== -->
+  <div id="contenido" style="display:none;">
+
+    <!-- ===============================
+       ACCIONES PRINCIPALES
+       =============================== -->
+    <h2>🤖 Acciones del Bot</h2>
+
+    <button style="width:100%; margin-bottom:10px;" onclick="verMenu()">
+      📖 Ver Menú
+    </button>
+
+    <button style="width:100%; margin-bottom:20px;" onclick="mostrarCarrito()">
+      🛍 Ver Carrito
+    </button>
+
+
+    <!-- ===============================
+       MENÚ DE PRODUCTOS
+       =============================== -->
+    <div id="menu" style="margin-top:20px;"></div>
+
+
+    <!-- ===============================
+       CARRITO
+       =============================== -->
+    <div id="carrito" style="margin-top:20px;"></div>
+
+
+    <!-- ===============================
+       UBICACIÓN
+       =============================== -->
+    <div id="ubicacion" style="margin-top:30px;">
+      <h3>📍 Ubicación de entrega</h3>
+
+      <label>Latitud</label>
+      <input id="lat" type="text" value="-17.7833">
+
+      <label>Longitud</label>
+      <input id="lng" type="text" value="-63.1821">
+    </div>
+
+
+    <!-- ===============================
+       CÁLCULO DE COSTOS
+       =============================== -->
+    <div id="costos" style="margin-top:30px;"></div>
+
+    <button id="btn_confirmar_costos" style="display:none; width:100%; margin-top:10px;" onclick="confirmarPedido()">
+      🔍 Calcular costos
+    </button>
+
+
+    <!-- ===============================
+       CREAR PEDIDO
+       =============================== -->
+    <button id="btn_crear" style="display:none; width:100%; margin-top:20px;" onclick="crearPedido()">
+      🧾 Crear Pedido
+    </button>
+
+
+    <!-- ===============================
+       QR DE PAGO
+       =============================== -->
+    <div id="qr_container" style="margin-top:30px;"></div>
+
+
+    <!-- ===============================
+       MIS PEDIDOS
+       =============================== -->
+    <button style="margin-top:30px; width:100%; background:#444;" onclick="verMisPedidos()">
+      📦 Ver Mis Pedidos
+    </button>
+
+    <div id="mis_pedidos" style="margin-top:20px;"></div>
+
+  </div>
+
+
+  <script>
+    let usuario_id = null;
+    let carrito = {};
+    let productosMap = {};
+
+    // =====================================================
+    // LOGIN
+    // =====================================================
+    function loginTelegram() {
+      const tg_id = document.getElementById("tg_id").value;
+      const username = document.getElementById("tg_username").value;
+      const first_name = document.getElementById("tg_nombre").value;
+
+      fetch("http://localhost:8000/auth/login_telegram_cliente", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          telegram_user_id: tg_id,
+          username: username,
+          first_name: first_name
+        })
+      })
+        .then(r => r.json())
+        .then(resp => {
+          usuario_id = resp.usuario_id;
+          document.getElementById("login").style.display = "none";
+          document.getElementById("contenido").style.display = "block";
+        });
+    }
+
+
+    // =====================================================
+    // 1) VER MENÚ
+    // =====================================================
+    // =====================================================
+    // 1) VER MENÚ (DISEÑO EN 2 COLUMNAS)
+    // =====================================================
+    function verMenu() {
+      fetch("http://localhost:8000/productos")
+        .then(r => r.json())
+        .then(productos => {
+          const div = document.getElementById("menu");
+          div.innerHTML = "<h2>Menú</h2>";
+
+          div.innerHTML += `<div class="menu-grid" id="grid_productos"></div>`;
+
+          const grid = document.getElementById("grid_productos");
+
+          productos.forEach(p => {
+            productosMap[p.id] = p;
+
+            grid.innerHTML += `
+          <div class="producto">
+            <strong>${p.nombre}</strong><br>
+            <small>${p.descripcion}</small><br>
+            <b>Bs. ${p.precio}</b><br>
+            <button onclick="agregar(${p.id})">Agregar ➕</button>
+          </div>
+        `;
+          });
+        });
+    }
+
+
+    // =====================================================
+    // 2) AGREGAR / QUITAR / VER CARRITO (SIMULACIÓN DE TELEGRAM)
+    // =====================================================
+    function agregar(id) {
+      carrito[id] = (carrito[id] || 0) + 1;
+      mostrarCarrito();
+    }
+
+    function quitar(id) {
+      if (carrito[id] > 1) carrito[id]--;
+      else delete carrito[id];
+
+      mostrarCarrito();
+    }
+
+    function vaciarCarrito() {
+      carrito = {};
+      mostrarCarrito();
+    }
+
+    function mostrarCarrito() {
+      const div = document.getElementById("carrito");
+
+      if (Object.keys(carrito).length === 0) {
+        div.innerHTML = "<h2>Carrito vacío</h2>";
+        document.getElementById("btn_confirmar_costos").style.display = "none";
+        return;
+      }
+
+      let html = "<h2>Carrito</h2>";
+
+      for (let pid in carrito) {
+        const info = productosMap[pid];
+        html += `
+      <div class="item-carrito">
+        <strong>${info.nombre}</strong><br>
+        Cantidad: ${carrito[pid]}<br>
+
+        <button class="boton-mini" onclick="agregar(${pid})">➕</button>
+        <button class="boton-mini" onclick="quitar(${pid})">➖</button>
+      </div>
+    `;
+      }
+
+      html += `<button onclick="vaciarCarrito()" style="background:red;">Vaciar Carrito</button>`;
+
+      div.innerHTML = html;
+
+      document.getElementById("btn_confirmar_costos").style.display = "block";
+    }
+
+
+    // =====================================================
+    // 3) CALCULAR COSTOS (Simula: enviar ubicación)
+    // =====================================================
+    function confirmarPedido() {
+      const lat = parseFloat(document.getElementById("lat").value);
+      const lng = parseFloat(document.getElementById("lng").value);
+
+      const items = Object.entries(carrito).map(([producto_id, cantidad]) => ({
+        producto_id: parseInt(producto_id),
+        cantidad
+      }));
+
+      fetch("http://localhost:8000/pedidos/calcular_costos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items, ubicacion: { lat, lng } })
+      })
+        .then(r => r.json())
+        .then(c => {
+          window.costosCache = c;
+          document.getElementById("costos").innerHTML = `
+      <h3>Resumen</h3>
+      Productos: Bs. ${c.total_productos}<br>
+      Envío: Bs. ${c.costo_envio}<br>
+      TOTAL: <strong>Bs. ${c.total_final}</strong>
+    `;
+          document.getElementById("btn_crear").style.display = "block";
+        });
+    }
+
+
+    // =====================================================
+    // 4) CREAR PEDIDO
+    // =====================================================
+    function crearPedido() {
+      const lat = parseFloat(document.getElementById("lat").value);
+      const lng = parseFloat(document.getElementById("lng").value);
+
+      const c = window.costosCache;
+
+      const items = Object.entries(carrito).map(([producto_id, cantidad]) => ({
+        producto_id: parseInt(producto_id),
+        cantidad
+      }));
+
+      const payload = {
+        usuario_id: usuario_id,
+        ubicacion_entrega: { lat, lng },
+        items: items,
+        total_productos: c.total_productos,
+        costo_envio: c.costo_envio,
+        total_final: c.total_final,
+        distancia_km: c.distancia_km,
+        tiempo_estimado_min: c.tiempo_estimado_min,
+        direccion: c.direccion
+      };
+
+      fetch("http://localhost:8000/pedidos/crear_pedido", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+        .then(r => r.json())
+        .then(resp => {
+          alert("Pedido creado ✔ ID: " + resp.pedido_id);
+          mostrarQR(resp.pedido_id);
+          carrito = {};
+          mostrarCarrito();
+        });
+    }
+
+
+    // =====================================================
+    // 5) MOSTRAR QR
+    // =====================================================
+    function mostrarQR(id) {
+      fetch(`http://localhost:8000/pedidos/${id}/qr`)
+        .then(r => r.json())
+        .then(qr => {
+          document.getElementById("qr_container").innerHTML = `
+        <h3>Pagar con QR</h3>
+        <img src="${qr.qr_url}" width="200"><br>
+        <button onclick="pagar(${id})">Marcar como Pagado ✔</button>
+      `;
+        });
+    }
+
+
+    // =====================================================
+    // 6) PAGAR
+    // =====================================================
+    function pagar(id) {
+      fetch(`http://localhost:8000/pedidos/${id}/confirmar_pago`, {
+        method: "POST"
+      })
+        .then(r => r.json())
+        .then(resp => {
+          alert(resp.mensaje);
+          verMisPedidos();
+        });
+    }
+
+
+    // =====================================================
+    // 7) MIS PEDIDOS
+    // =====================================================
+    function verMisPedidos() {
+      fetch(`http://localhost:8000/usuarios/${usuario_id}/pedidos`)
+        .then(r => r.json())
+        .then(lista => {
+          const div = document.getElementById("mis_pedidos");
+          div.innerHTML = "<h3>Mis pedidos</h3>";
+
+          lista.forEach(p => {
+            div.innerHTML += `
+          <div style="background:white;padding:10px;margin-top:10px;border-radius:8px;">
+            <b>#${p.pedido_id}</b> – ${p.estado}<br>
+            Total: Bs. ${p.total}<br>
+            ${p.estado_pago === "pendiente"
+                ? `<button onclick="mostrarQR(${p.pedido_id})">Pagar</button>`
+                : "<span style='color:green;'>Pagado ✔</span>"}
+          </div>
+        `;
+          });
+        });
+    }
+
+  </script>
+</body>
+
+</html>

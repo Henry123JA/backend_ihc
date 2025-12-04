@@ -1,0 +1,10 @@
+A. Bot de Telegram (lado del cliente):
+El bot debe permitir:
+1. Mostrar el menú del restaurante.
+2. Seleccionar productos, cantidades y observaciones.
+   2.1. Ver el carrito actualizado
+4. Enviar ubicación para entrega.
+   4.1. Calcular costos del pedido
+3. Confirmar el pedido. (crear pedido definitivo) 
+5. Realizar pago mediante código QR.
+6. Recibir confirmación y estado del pedido.
