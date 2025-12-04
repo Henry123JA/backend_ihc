@@ -261,7 +261,7 @@ def iniciar_ruta(conductor_id: int, pedido_id: int, db: Session = Depends(get_db
 
     notif = models.Notificacion(
         pedido_id=pedido_id,
-        mensaje=f"🚗 Tu pedido #{pedido_id} va EN CAMINO 🛵",
+        mensaje=f"🚗 Tu pedido #{pedido_id} HA SIDO RECOGIDO 🛵",
         tipo="cliente"
     )
     db.add(notif)
